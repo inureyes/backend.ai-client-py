@@ -58,6 +58,7 @@ class BaseKernel(BaseFunction):
                 'instanceCores': resources.get('cpu', None),
                 'instanceGPUs': resources.get('gpu', None),
             },
+            'timeout': 30,
             'scaling_group': scaling_group
         })
         data = resp.json()
