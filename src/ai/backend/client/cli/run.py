@@ -122,7 +122,8 @@ def run(args):
                 args.lang, args.client_token,
                 mounts=args.mount,
                 envs=envs,
-                resources=resources)
+                resources=resources,
+                scaling_group=args.scaling_group)
         except BackendError as e:
             print_fail(str(e))
             return
@@ -199,6 +200,8 @@ run.add_argument('-e', '--env', metavar='KEY=VAL', type=str, action='append',
                       '(may appear multiple times)')
 run.add_argument('-m', '--mount', type=str, action='append',
                  help='User-owned virtual folder names to mount')
+run.add_argument('--scaling-group', type=str, default='default',
+                 help='The name of a scaling group in which to run the session.')
 run.add_argument('-s', '--stats', action='store_true', default=False,
                  help='Show resource usage statistics after termination '
                       '(only works if "--rm" is given)')

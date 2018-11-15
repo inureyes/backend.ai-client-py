@@ -36,7 +36,8 @@ class BaseKernel(BaseFunction):
                        mounts: Iterable[str] = None,
                        envs: Mapping[str, str] = None,
                        resources: Mapping[str, int] = None,
-                       exec_timeout: int = 0) -> str:
+                       exec_timeout: int = 0,
+                       scaling_group: str = None) -> str:
         if client_token:
             assert 4 <= len(client_token) <= 64, \
                    'Client session token should be 4 to 64 characters long.'
@@ -57,6 +58,7 @@ class BaseKernel(BaseFunction):
                 'instanceCores': resources.get('cpu', None),
                 'instanceGPUs': resources.get('gpu', None),
             },
+            'scaling_group': scaling_group
         })
         data = resp.json()
         o = cls(data['kernelId'])  # type: ignore
