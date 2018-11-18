@@ -16,6 +16,7 @@ def sessions(args):
     fields = [
         ('Session ID', 'sess_id'),
         ('Lang/runtime', 'lang'),
+        ('Scaling Group', 'scaling_group'),
         ('Created At', 'created_at',),
         ('Terminated At', 'terminated_at'),
         ('Status', 'status'),
@@ -71,6 +72,7 @@ def session(args):
         ('Created At', 'created_at',),
         ('Terminated At', 'terminated_at'),
         ('Agent', 'agent'),
+        ('Scaling Group', 'scaling_group'),
         ('Status', 'status',),
         ('Status Info', 'status_info',),
         ('Memory Slot', 'mem_slot'),
