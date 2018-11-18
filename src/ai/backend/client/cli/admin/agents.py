@@ -16,6 +16,7 @@ def agents(args):
     fields = [
         ('ID', 'id'),
         ('Status', 'status'),
+        ('Scaling Group', 'scaling_group'),
         ('First Contact', 'first_contact'),
         ('Mem.Slots', 'mem_slots'),
         ('CPU Slots', 'cpu_slots'),
