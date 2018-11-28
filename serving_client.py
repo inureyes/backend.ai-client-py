@@ -15,7 +15,7 @@ def main():
   predict_request = args.payload
   response = requests.post(SERVER_URL, data=predict_request)
   response.raise_for_status()
-  prediction = response.json()['predictions']
+  prediction = response.json()
   print(prediction)
 
 if __name__ == '__main__':

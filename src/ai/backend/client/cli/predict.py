@@ -20,7 +20,7 @@ def predict(args):
         vprint_wait = print_wait
         vprint_done = print_done
     proc = subprocess.run(
-        ['backend.ai run python-tensorflow:1.12-py36-serv ./serving_client.py --mount model_'+model_name+' --exec "python serving_client.py '+args.payload+'" -t '+args.sess], shell=True)
+        ['backend.ai run python-tensorflow:1.12-py36-srv ./serving_client.py --mount model_'+model_name+' --exec "python serving_client.py '+args.payload+'" -t '+args.sess], shell=True)
 
 
 predict.add_argument('sess',

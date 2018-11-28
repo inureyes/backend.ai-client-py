@@ -24,7 +24,7 @@ def serve(args):
     vprint_info("Loading model: "+args.model)
     model_name = args.model
     proc = subprocess.run(
-        ['backend.ai run python-tensorflow:1.12-py36-serv --mount model_'+model_name+' -c "print(\' - Model loaded.\')"'], shell=True)
+        ['backend.ai run python-tensorflow:1.12-py36-srv --mount model_'+model_name+' -c "print(\' - Model loaded.\')"'], shell=True)
 
 serve.add_argument('model',
                  help='Serving model name. ')
