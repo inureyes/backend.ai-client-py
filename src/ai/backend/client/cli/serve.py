@@ -21,10 +21,12 @@ def serve(args):
         vprint_info = print_info
         vprint_wait = print_wait
         vprint_done = print_done
-    vprint_info("Loading model")
+    vprint_info("Loading model: "+args.model)
     model_name = args.model
     proc = subprocess.run(
-        ['backend.ai run python-tensorflow:1.12-py36-serv ./resnet_client.py --mount model_'+model_name+' --exec "ls -al;ps -ua;python ./model_resnet_v2/resnet_client.py"'], shell=True)
+        ['backend.ai run python-tensorflow:1.12-py36-serv ./resnet_client.py --mount model_'+model_name+''], shell=True)
+    #proc = subprocess.run(
+    #    ['backend.ai run python-tensorflow:1.12-py36-serv ./resnet_client.py --mount model_'+model_name+' --exec "pip install --user requests;ls -al;ps -ua;python ./model_resnet_v2/resnet_client.py"'], shell=True)
 
 serve.add_argument('model',
                  help='Serving model name. ')
