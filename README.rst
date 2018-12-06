@@ -9,6 +9,10 @@ Backend.AI Client
    :target: https://pypi.org/project/backend.ai-client/
    :alt: Python Versions
 
+.. image:: https://readthedocs.org/projects/backendai-client-sdk-for-python/badge/?version=latest
+   :target: https://docs.client-py.backend.ai/en/latest/?badge=latest
+   :alt: SDK Documentation
+
 .. image:: https://travis-ci.org/lablup/backend.ai-client-py.svg?branch=master
    :target: https://travis-ci.org/lablup/backend.ai-client-py
    :alt: Build Status (Linux)
@@ -97,7 +101,7 @@ Python module path like:
 .. code-block:: console
 
    $ lcc main.c mylib.c mylib.h
-   
+
 Since the client version 1.1.5, the sessions are no longer automatically cleaned up.
 To do that, add ``--rm`` option to the ``run`` command, like Docker CLI.
 
@@ -139,102 +143,6 @@ More commands?
 ~~~~~~~~~~~~~~
 
 Please run ``backend.ai --help`` to see more commands.
-
-
-Synchronous API (v1.2+)
------------------------
-
-.. code-block:: python
-
-   from ai.backend.client import Session
-
-   with Session() as session:
-       kern = session.Kernel.get_or_create('lua5', client_token='mysession')
-       code = 'print("hello world")'
-       mode = 'query'
-       run_id = None
-       while True:
-           result = kern.execute(run_id, code, mode=mode)
-           run_id = result['runId']  # keeps track of this particular run loop
-           for rec in result.get('console', []):
-               if rec[0] == 'stdout':
-                   print(rec[1], end='', file=sys.stdout)
-               elif rec[0] == 'stderr':
-                   print(rec[1], end='', file=sys.stderr)
-               else:
-                   handle_media(rec)
-           sys.stdout.flush()
-           if result['status'] == 'finished':
-               break
-           elif result['status'] == 'waiting-input':
-               mode = 'input'
-               if result['options'].get('is_password', False):
-                   code = getpass.getpass()
-               else:
-                   code = input()
-           else:
-               mode = 'continued'
-               code = ''
-       kern.destroy()
-
-You need to take care of ``client_token`` because it determines whether to
-reuse kernel sessions or not.
-Backend.AI cloud has a timeout so that it terminates long-idle kernel sessions,
-but within the timeout, any kernel creation requests with the same ``client_token``
-let Backend.AI cloud to reuse the kernel.
-
-Asynchronous API (v18.12+)
---------------------------
-
-.. code-block:: python
-
-   import asyncio
-   import json
-   import aiohttp
-   from ai.backend.client import AsyncSession
-
-   async def main():
-       async with AsyncSession() as session:
-           kern = await session.Kernel.get_or_create('lua5', client_token='mysession')
-           code = 'print("hello world")'
-           mode = 'query'
-           async with kern.stream_execute(code, mode=mode) as stream:
-               # no need for explicit run_id since WebSocket connection represents it!
-               async for result in stream:
-                   if result.type != aiohttp.WSMsgType.TEXT:
-                       continue
-                   result = json.loads(result.data)
-                   for rec in result.get('console', []):
-                       if rec[0] == 'stdout':
-                           print(rec[1], end='', file=sys.stdout)
-                       elif rec[0] == 'stderr':
-                           print(rec[1], end='', file=sys.stderr)
-                       else:
-                           handle_media(rec)
-                   sys.stdout.flush()
-                   if result['status'] == 'finished':
-                       break
-                   elif result['status'] == 'waiting-input':
-                       mode = 'input'
-                       if result['options'].get('is_password', False):
-                           code = getpass.getpass()
-                       else:
-                           code = input()
-                       await stream.send_text(code)
-                   else:
-                       mode = 'continued'
-                       code = ''
-           await kern.destroy()
-
-   loop = asyncio.get_event_loop()
-   try:
-       loop.run_until_complete(main())
-   finally:
-       loop.close()
-
-The async version has all sync-version interfaces as coroutines but comes with additional
-features such as ``stream_execute()`` which streams the execution results via websockets and
-``stream_pty()`` for interactive terminal streaming.
 
 
 Troubleshooting (FAQ)

@@ -86,6 +86,7 @@ def main():
     import ai.backend.client.cli.files           # noqa
     import ai.backend.client.cli.serve           # noqa
     import ai.backend.client.cli.predict           # noqa
+    import ai.backend.client.cli.app  # noqa
 
     if len(sys.argv) <= 1:
         global_argparser.print_help()

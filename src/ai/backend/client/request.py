@@ -20,17 +20,18 @@ __all__ = [
 ]
 
 
-'''
-The type alias for the set of allowed types for request content.
-'''
 RequestContent = Union[
     bytes, bytearray, str,
     aiohttp.StreamReader,
     io.IOBase,
     None,
 ]
+'''
+The type alias for the set of allowed types for request content.
+'''
 
 
+AttachedFile = namedtuple('AttachedFile', 'filename stream content_type')
 '''
 A struct that represents an attached file to the API request.
 
@@ -43,7 +44,6 @@ A struct that represents an attached file to the API request.
 :param str content_type: The content type for the stream.  For arbitrary
                          binary data, use "application/octet-stream".
 '''
-AttachedFile = namedtuple('AttachedFile', 'filename stream content_type')
 
 
 class Request:
@@ -168,7 +168,7 @@ class Request:
                                f.stream,
                                filename=f.filename,
                                content_type=f.content_type)
-            assert data.is_multipart
+            assert data.is_multipart, 'Failed to pack files as multipart.'
             # Let aiohttp fill up the content-type header including
             # multipart boundaries.
             self.headers.pop('Content-Type', None)
@@ -185,14 +185,35 @@ class Request:
 
     # TODO: attach rate-limit information
 
-    def fetch(self, **kwargs):
+    def fetch(self, **kwargs) -> 'FetchContextManager':
         '''
         Sends the request to the server and reads the response.
 
         You may use this method either with plain synchronous Session or
-        AsyncSession.
+        AsyncSession.  Both the followings patterns are valid:
+
+        .. code-block:: python3
+
+          from ai.backend.client.request import Request
+          from ai.backend.client.session import Session
+
+          with Session() as sess:
+            rqst = Request(sess, 'GET', ...)
+            with rqst.fetch() as resp:
+              print(resp.text())
+
+        .. code-block:: python3
+
+          from ai.backend.client.request import Request
+          from ai.backend.client.session import AsyncSession
+
+          async with AsyncSession() as sess:
+            rqst = Request(sess, 'GET', ...)
+            async with rqst.fetch() as resp:
+              print(await resp.text())
         '''
-        assert self.method in self._allowed_methods
+        assert self.method in self._allowed_methods, \
+               'Disallowed HTTP method: {}'.format(self.method)
         self.date = datetime.now(tzutc())
         self.headers['Date'] = self.date.isoformat()
         if self.content_type is not None:
@@ -205,12 +226,18 @@ class Request:
             headers=self.headers)
         return FetchContextManager(self.session, rqst_ctx, **kwargs)
 
-    def connect_websocket(self, **kwargs):
+    def connect_websocket(self, **kwargs) -> 'WebSocketContextManager':
         '''
         Creates a WebSocket connection.
+
+        .. warning::
+
+          This method only works with
+          :class:`~ai.backend.client.session.AsyncSession`.
         '''
-        assert isinstance(self.session, AsyncSession)
-        assert self.method == 'GET'
+        assert isinstance(self.session, AsyncSession), \
+               'Cannot use websockets with sessions in the synchronous mode'
+        assert self.method == 'GET', 'Invalid websocket method'
         self.date = datetime.now(tzutc())
         self.headers['Date'] = self.date.isoformat()
         # websocket is always a "binary" stream.
@@ -340,7 +367,8 @@ class FetchContextManager:
                                      async_mode=self._async_mode)
         except aiohttp.ClientError as e:
             msg = 'Request to the API endpoint has failed.\n' \
-                  'Check your network connection and/or the server status.'
+                  'Check your network connection and/or the server status.\n' \
+                  'Error detail: {!r}'.format(e)
             raise BackendClientError(msg) from e
 
     def __exit__(self, *args):
@@ -419,7 +447,7 @@ class WebSocketResponse:
 
 class WebSocketContextManager:
     '''
-    A high-level wrapper of :class:`aiohttp._WSRequestContextManager`.
+    The context manager returned by :func:`Request.connect_websocket`.
     '''
 
     __slots__ = (
@@ -440,8 +468,8 @@ class WebSocketContextManager:
             raw_ws = await self.ws_ctx.__aenter__()
         except aiohttp.ClientError as e:
             msg = 'Request to the API endpoint has failed.\n' \
-                  'Check your network connection and/or the server status.'
-            msg += '\n' + str(e)
+                  'Check your network connection and/or the server status.\n' \
+                  'Error detail: {!r}'.format(e)
             raise BackendClientError(msg) from e
         wrapped_ws = self.response_cls(self.session, raw_ws)
         if self.on_enter is not None:

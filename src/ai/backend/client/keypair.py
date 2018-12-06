@@ -11,6 +11,7 @@ __all__ = (
 class KeyPair:
 
     session = None
+    '''The client session instance that this function class is bound to.'''
 
     @api_function
     @classmethod
@@ -51,7 +52,7 @@ class KeyPair:
 
     @api_function
     @classmethod
-    async def list(cls, user_id: Union[int, str],
+    async def list(cls, user_id: Union[int, str] = None,
                    is_active: bool = None,
                    fields: Iterable[str] = None):
         if fields is None:
@@ -59,17 +60,25 @@ class KeyPair:
                 'access_key', 'secret_key',
                 'is_active', 'is_admin',
             )
-        uid_type = 'Int!' if isinstance(user_id, int) else 'String!'
-        q = 'query($user_id: {0}, $is_active: Boolean) {{'.format(uid_type) + \
-            '  keypairs(user_id: $user_id, is_active: $is_active) {' \
-            '    $fields' \
-            '  }' \
-            '}'
+        if user_id is None:
+            q = 'query($is_active: Boolean) {' \
+                '  keypairs(is_active: $is_active) {' \
+                '    $fields' \
+                '  }' \
+                '}'
+        else:
+            uid_type = 'Int!' if isinstance(user_id, int) else 'String!'
+            q = 'query($user_id: {0}, $is_active: Boolean) {{'.format(uid_type) + \
+                '  keypairs(user_id: $user_id, is_active: $is_active) {' \
+                '    $fields' \
+                '  }' \
+                '}'
         q = q.replace('$fields', ' '.join(fields))
         variables = {
-            'user_id': user_id,
             'is_active': is_active,
         }
+        if user_id is not None:
+            variables['user_id'] = user_id
         rqst = Request(cls.session, 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
@@ -79,12 +88,34 @@ class KeyPair:
             data = await resp.json()
             return data['keypairs']
 
+    def __init__(self, access_key: str):
+        self.access_key = access_key
+
     @api_function
-    @classmethod
-    async def activate(cls, access_key: str):
+    async def info(self, fields: Iterable[str] = None):
+        if fields is None:
+            fields = (
+                'access_key', 'secret_key',
+                'is_active', 'is_admin',
+            )
+        q = 'query {' \
+            '  keypair {' \
+            '    $fields' \
+            '  }' \
+            '}'
+        q = q.replace('$fields', ' '.join(fields))
+        rqst = Request(self.session, 'POST', '/admin/graphql')
+        rqst.set_json({
+            'query': q,
+        })
+        async with rqst.fetch() as resp:
+            data = await resp.json()
+            return data['keypair']
+
+    @api_function
+    async def activate(self):
         raise NotImplementedError
 
     @api_function
-    @classmethod
-    async def deactivate(cls, access_key: str):
+    async def deactivate(self):
         raise NotImplementedError

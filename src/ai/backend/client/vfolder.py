@@ -22,11 +22,12 @@ _rx_slug = re.compile(r'^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$')
 class VFolder:
 
     session = None
+    '''The client session instance that this function class is bound to.'''
 
     @api_function
     @classmethod
     async def create(cls, name: str, host: str = None):
-        assert _rx_slug.search(name) is not None
+        assert _rx_slug.search(name) is not None, 'Invalid vfolder name format'
         rqst = Request(cls.session, 'POST', '/folders')
         rqst.set_json({
             'name': name,

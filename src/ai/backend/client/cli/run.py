@@ -9,7 +9,6 @@ from pathlib import Path
 import re
 import string
 import sys
-import traceback
 
 import aiohttp
 from humanize import naturalsize
@@ -21,7 +20,7 @@ from ..compat import current_loop, token_hex
 from ..exceptions import BackendError
 from ..session import Session, AsyncSession
 from .pretty import (
-    print_info, print_wait, print_done, print_fail, print_warn,
+    print_info, print_wait, print_done, print_error, print_fail, print_warn,
     format_info,
 )
 
@@ -115,7 +114,7 @@ async def exec_loop(stdout, stderr, kernel, mode, code, *, opts=None,
                     code = getpass.getpass()
                 else:
                     code = input()
-                await stream.send_text(code)
+                await stream.send_str(code)
             elif result['status'] == 'continued':
                 pass
 
@@ -200,20 +199,26 @@ def _format_stats(stats):
     return tabulate(formatted)
 
 
-def _get_mem_slots(size, suffix):
-    size = float(size)
-    suffix = suffix.lower()
+def _get_mem_slots(memslot):
+    """Accept MB unit, and convert to GB"""
+    assert 0 < len(memslot) < 3
+    size = float(memslot[0])
+    suffix = memslot[1].lower() if len(memslot) == 2 else None
+    mod_size = None
     if suffix in ('k', 'kb', 'kib'):
-        return size / 2 ** 20
+        mod_size = size / 2 ** 10
     elif suffix in ('m', 'mb', 'mib'):
-        return size / 2 ** 10
+        mod_size = size
     elif suffix in ('g', 'gb', 'gib'):
-        return size
+        mod_size = size * 2 ** 10
     elif suffix in ('t', 'tb', 'tib'):
-        return size * 2 ** 10
+        mod_size = size * 2 ** 20
     elif suffix in ('p', 'pb', 'pib'):
-        return size * 2 ** 20
-    return None
+        mod_size = size * 2 ** 30
+    else:
+        mod_size = size
+    mod_size = mod_size / (2 ** 10) if mod_size else None
+    return mod_size
 
 
 @register_command
@@ -251,8 +256,8 @@ def run(args):
     mem = resources.pop('ram', None) if mem is None else mem
     if mem:
         memlist = re.findall(r'[A-Za-z]+|[\d\.]+', mem)
-        if memlist and len(memlist) == 2:
-            memslot = _get_mem_slots(memlist[0], memlist[1])
+        if memlist:
+            memslot = _get_mem_slots(memlist)
             if memslot:
                 resources['mem'] = memslot
 
@@ -320,9 +325,9 @@ def run(args):
                 envs=envs,
                 resources=resources,
                 tag=args.tag)
-        except BackendError as e:
-            print_fail('[{0}] {1}'.format(idx, e))
-            return
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
         if kernel.created:
             vprint_done('[{0}] Session {0} is ready.'.format(idx, kernel.kernel_id))
         else:
@@ -355,12 +360,8 @@ def run(args):
                 exec_loop_sync(sys.stdout, sys.stderr, kernel, 'query', args.code,
                                vprint_done=vprint_done)
             vprint_done('[{0}] Execution finished.'.format(idx))
-        except BackendError as e:
-            print_fail('[{0}] {1}'.format(idx, e))
-            sys.exit(1)
-        except Exception:
-            print_fail('[{0}] Execution failed!'.format(idx))
-            traceback.print_exc()
+        except Exception as e:
+            print_error(e)
             sys.exit(1)
         finally:
             if args.rm:
@@ -602,8 +603,8 @@ def terminate(args):
             try:
                 kernel = session.Kernel(sess)
                 ret = kernel.destroy()
-            except BackendError as e:
-                print_fail(str(e))
+            except Exception as e:
+                print_error(e)
                 has_failure = True
             if has_failure:
                 sys.exit(1)

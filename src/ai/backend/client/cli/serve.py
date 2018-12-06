@@ -9,6 +9,9 @@ from .pretty import (
 
 import subprocess
 
+def _noop(*args, **kwargs):
+    pass
+
 @register_command
 def serve(args):
     '''
@@ -24,7 +27,7 @@ def serve(args):
     vprint_info("Loading model: "+args.model)
     model_name = args.model
     proc = subprocess.run(
-        ['backend.ai run python-tensorflow:1.12-py36-srv --mount model_'+model_name+' -c "print(\' - Model loaded.\')"'], shell=True)
+        ['backend.ai run python-tensorflow:1.12-py36-srv --mount model_'+model_name+'  -e MODEL_NAME='+model_name+' -c "print(\' - Model loaded.\')"'], shell=True)
 
 serve.add_argument('model',
                  help='Serving model name. ')
