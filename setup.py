@@ -12,11 +12,11 @@ install_requires = [
     'attrs>=18.0',       # to avoid pip10 resolver issue
     'namedlist>=1.6',
     'python-dateutil>=2.5',
-    'ConfigArgParse==0.12.0',
     'tabulate>=0.7.7',
     'tqdm~=4.21',
     'humanize>=0.5.1',
     'yarl>=1.1.1',
+    'Click>=7.0',
 ]
 build_requires = [
     'wheel>=0.31.0',
@@ -39,6 +39,7 @@ dev_requires = [
 ] + build_requires + test_requires
 docs_requires = [
     'sphinx>=1.7,<1.8',
+    'sphinx-intl',
     'sphinx_rtd_theme>=0.4.2',
     'sphinxcontrib-trio>=1.0.1',
     'sphinx-autodoc-typehints>=1.5.2',
@@ -49,7 +50,7 @@ docs_requires = [
 def read_src_version():
     path = (Path(__file__).parent / 'src' /
             'ai' / 'backend' / 'client' / '__init__.py')
-    src = path.read_text()
+    src = path.read_text(encoding='utf-8')
     m = re.search(r"^__version__ = '([^']+)'$", src, re.MULTILINE)
     assert m is not None, 'Could not read the version information!'
     return m.group(1)
@@ -63,7 +64,7 @@ setup(
     # https://packaging.python.org/en/latest/single_source_version.html
     version=read_src_version(),
     description='Backend.AI Client for Python',
-    long_description=Path('README.rst').read_text(),
+    long_description=Path('README.rst').read_text(encoding='utf-8'),
     url='https://github.com/lablup/backend.ai-client-py',
     author='Lablup Inc.',
     author_email='joongi@lablup.com',
@@ -97,8 +98,8 @@ setup(
     entry_points={
         'console_scripts': [
             'backend.ai = ai.backend.client.cli:main',
-            'lcc = ai.backend.client.cli:main',
-            'lpython = ai.backend.client.cli:main',
+            'lcc = ai.backend.client.cli:run_alias',
+            'lpython = ai.backend.client.cli:run_alias',
         ],
     },
 )

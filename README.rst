@@ -27,6 +27,7 @@ Backend.AI Client
 
 The official API client library for `Backend.AI <https://backend.ai>`_
 
+
 Usage
 -----
 
@@ -34,13 +35,28 @@ You should set the access key and secret key as environment variables to use the
 Grab your keypair from `cloud.backend.ai <https://cloud.backend.ai>`_ or your cluster
 admin.
 
+On Linux/macOS, create a shell script as ``my-backend-ai.sh`` and run it before using
+the ``backend.ai`` command:
+
 .. code-block:: sh
 
    export BACKEND_ACCESS_KEY=...
    export BACKEND_SECRET_KEY=...
+   export BACKEND_ENDPOINT=https://my-precious-cluster
 
-   # optional (for local clusters)
-   export BACKEND_ENDPOINT="https://my-precious-cluster/"
+On Windows, create a batch file as ``my-backend-ai.bat`` and run it before using
+the ``backend.ai`` command:
+
+.. code-block:: bat
+
+   chcp 65001
+   set PYTHONIOENCODING=UTF-8
+   set BACKEND_ACCESS_KEY=...
+   set BACKEND_SECRET_KEY=...
+   set BACKEND_ENDPOINT=https://my-precious-cluster
+
+Note that it switches to the UTF-8 codepage for correct display of
+special characters used in the console logs.
 
 
 Command-line Interface
@@ -113,14 +129,15 @@ You can see the list of currently running sessions using your API keypair.
 .. code-block:: console
 
    $ backend.ai ps
-   Session ID                        Lang/runtime    Created At                        Termianted At    Status      Memory Slot    CPU Slot    GPU Slot
-   --------------------------------  --------------  --------------------------------  ---------------  --------  -------------  ----------  ----------
-   5baafb2136029228ca9d873e1f2b4f6a  python:latest   2018-01-09T04:32:21.962223+00:00                   RUNNING            1024           1           0
+   Session ID    Lang/runtime              Tag    Created At                        Terminated At    Status      CPU Cores    CPU Used (ms)    Total Memory (MiB)    Used Memory (MiB)    GPU Cores
+   ------------  ------------------------  -----  --------------------------------  ---------------  --------  -----------  ---------------  --------------------  -------------------  -----------
+   88ee10a027    lablup/python:3.6-ubuntu         2018-12-11T03:53:14.802206+00:00                   RUNNING             1            16314                  1024                 39.2            0
+   fce7830826    lablup/python:3.6-ubuntu         2018-12-11T03:50:10.150740+00:00                   RUNNING             1            15391                  1024                 39.2            0
 
 If you set ``-t`` option in the ``run`` command, it will be used as the session ID—you may use it to assign a human-readable, easy-to-type alias for your sessions.
 These session IDs can be reused after the current session using the same ID terminates.
 
-To terminate a session,
+To terminate a session, you can use ``terminate`` or ``rm`` command.
 
 .. code-block:: console
 

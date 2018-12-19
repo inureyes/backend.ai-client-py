@@ -86,13 +86,17 @@ master_doc = 'index'
 # Usually you set "language" from the command line for these cases.
 language = None
 
+gettext_uuid = True
+gettext_compact = False
+locale_dirs = ['locale/']
+
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = None
+pygments_style = 'tango'
 
 highlight_language = 'python3'
 
@@ -136,19 +140,17 @@ htmlhelp_basename = 'BackendAIClientSDKforPythonDocumentationdoc'
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
-    #
-    # 'papersize': 'letterpaper',
+    'papersize': 'a4paper',
 
     # The font size ('10pt', '11pt' or '12pt').
-    #
-    # 'pointsize': '10pt',
+    'pointsize': '10pt',
 
     # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
+    'preamble': r'''
+    \usepackage{kotex}
+    ''',
 
     # Latex figure (float) alignment
-    #
     # 'figure_align': 'htbp',
 }
 
@@ -159,7 +161,7 @@ latex_documents = [
     (master_doc,
      'BackendAIClientSDKforPythonDocumentation.tex',
      'Backend.AI Client SDK for Python Documentation',
-     'Joongi Kim', 'manual'),
+     author, 'manual'),
 ]
 
 
@@ -223,7 +225,7 @@ intersphinx_mapping = {
     'aiohttp':
         ('https://aiohttp.readthedocs.io/en/stable/', None),
     'backendai':
-        ('http://docs.backend.ai/en/latest/', None),
+        ('https://docs.backend.ai/en/latest/', None),
 }
 
 autodoc_default_options = {
