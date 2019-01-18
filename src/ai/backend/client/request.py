@@ -1,7 +1,9 @@
 from collections import OrderedDict, namedtuple
 from datetime import datetime
+from decimal import Decimal
 import functools
 import io
+from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence, Union
 
 import aiohttp
@@ -50,6 +52,16 @@ _default_request_timeout = aiohttp.ClientTimeout(
     total=None, connect=None,
     sock_connect=30.0, sock_read=None,
 )
+
+
+class ExtendedJSONEncoder(modjson.JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, Path):
+            return str(obj)
+        if isinstance(obj, Decimal):
+            return str(obj)
+        return super().default(obj)
 
 
 class Request:
@@ -139,7 +151,8 @@ class Request:
         '''
         A shortcut for set_content() with JSON objects.
         '''
-        self.set_content(modjson.dumps(value), content_type='application/json')
+        self.set_content(modjson.dumps(value, cls=ExtendedJSONEncoder),
+                         content_type='application/json')
 
     def attach_files(self, files: Sequence[AttachedFile]):
         '''
